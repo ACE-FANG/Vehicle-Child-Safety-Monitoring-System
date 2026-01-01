@@ -1,0 +1,1382 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
+    <title>车载安全监控系统 - 移动端</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/viewerjs/1.11.6/viewer.min.css">
+    <style>
+        :root {
+            --primary-color: #2c3e50;
+            --secondary-color: #3498db;
+            --success-color: #2ecc71;
+            --warning-color: #f39c12;
+            --danger-color: #e74c3c;
+            --light-bg: #f8f9fa;
+            --card-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            --border-radius: 12px;
+        }
+        
+        * {
+            -webkit-tap-highlight-color: transparent;
+        }
+        
+        body {
+            font-family: 'Segoe UI', 'Microsoft YaHei', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding-bottom: 80px;
+            overflow-x: hidden;
+        }
+        
+        .navbar {
+            background: rgba(44, 62, 80, 0.95) !important;
+            backdrop-filter: blur(10px);
+            padding: 12px 0;
+        }
+        
+        .card {
+            border-radius: var(--border-radius);
+            border: none;
+            box-shadow: var(--card-shadow);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            margin-bottom: 16px;
+            overflow: hidden;
+        }
+        
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+        }
+        
+        .card-header {
+            border-radius: var(--border-radius) var(--border-radius) 0 0 !important;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            font-weight: 600;
+            padding: 15px 20px;
+            font-size: 1.1rem;
+        }
+        
+        .card-body {
+            padding: 20px;
+        }
+        
+        .value-display {
+            font-size: 1.8rem;
+            font-weight: bold;
+            line-height: 1.2;
+        }
+        
+        .value-unit {
+            font-size: 0.9rem;
+            color: #6c757d;
+            font-weight: normal;
+        }
+        
+        .risk-indicator {
+            padding: 12px 24px;
+            border-radius: 25px;
+            color: white;
+            text-align: center;
+            font-weight: bold;
+            font-size: 1.2rem;
+            transition: all 0.3s;
+            display: inline-block;
+            min-width: 100px;
+        }
+        
+        .risk-normal { 
+            background-color: var(--success-color);
+            box-shadow: 0 4px 12px rgba(46, 204, 113, 0.3);
+        }
+        .risk-warning { 
+            background-color: var(--warning-color);
+            box-shadow: 0 4px 12px rgba(243, 156, 18, 0.3);
+        }
+        .risk-emergency { 
+            background-color: var(--danger-color);
+            animation: pulse 2s infinite;
+            box-shadow: 0 4px 12px rgba(231, 76, 60, 0.3);
+        }
+        
+        .alert-item {
+            padding: 12px 15px;
+            margin-bottom: 8px;
+            border-radius: 10px;
+            border-left: 5px solid;
+            animation: fadeIn 0.5s;
+            transition: transform 0.2s;
+        }
+        
+        .alert-item:hover {
+            transform: translateX(5px);
+        }
+        
+        .alert-emergency {
+            background-color: #ffeaea;
+            border-left-color: var(--danger-color);
+        }
+        
+        .alert-warning {
+            background-color: #fff4e6;
+            border-left-color: var(--warning-color);
+        }
+        
+        .alert-info {
+            background-color: #e6f7ff;
+            border-left-color: var(--secondary-color);
+        }
+        
+        .btn-control {
+            padding: 14px;
+            margin: 5px;
+            border-radius: 12px;
+            font-weight: 600;
+            transition: all 0.3s;
+            border: none;
+            font-size: 1rem;
+        }
+        
+        .btn-control:active {
+            transform: scale(0.95);
+        }
+        
+        .btn-control i {
+            margin-right: 8px;
+        }
+        
+        .status-badge {
+            display: inline-block;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+        
+        .status-online {
+            background-color: var(--success-color);
+            color: white;
+        }
+        
+        .status-offline {
+            background-color: #95a5a6;
+            color: white;
+        }
+        
+        /* 图片显示优化 */
+        .image-container {
+            width: 100%;
+            background-color: #f8f9fa;
+            border-radius: 10px;
+            overflow: hidden;
+            position: relative;
+            padding-top: 75%; /* 4:3 比例 */
+            margin-bottom: 15px;
+        }
+        
+        .captured-image {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: contain; /* 改为contain确保完整显示 */
+            transition: transform 0.3s;
+            cursor: pointer;
+        }
+        
+        .captured-image:hover {
+            transform: scale(1.02);
+        }
+        
+        .image-info {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: linear-gradient(transparent, rgba(0,0,0,0.7));
+            color: white;
+            padding: 15px;
+            transform: translateY(100%);
+            transition: transform 0.3s;
+        }
+        
+        .image-container:hover .image-info {
+            transform: translateY(0);
+        }
+        
+        .tab-content {
+            animation: fadeIn 0.5s;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.05); opacity: 0.8; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        
+        /* 移动端优化 */
+        @media (max-width: 768px) {
+            .value-display { 
+                font-size: 1.6rem; 
+            }
+            
+            .card { 
+                margin-bottom: 12px;
+                border-radius: 10px;
+            }
+            
+            .card-header {
+                padding: 12px 15px;
+                font-size: 1rem;
+            }
+            
+            .card-body {
+                padding: 15px;
+            }
+            
+            .btn-control { 
+                padding: 12px;
+                font-size: 0.95rem;
+                margin: 4px;
+            }
+            
+            .container {
+                padding-left: 10px;
+                padding-right: 10px;
+            }
+            
+            .image-container {
+                padding-top: 66.67%; /* 3:2 比例 */
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .value-display { 
+                font-size: 1.4rem; 
+            }
+            
+            .risk-indicator {
+                padding: 10px 20px;
+                font-size: 1rem;
+                min-width: 80px;
+            }
+            
+            .image-container {
+                padding-top: 56.25%; /* 16:9 比例 */
+            }
+        }
+        
+        /* 底部导航栏优化 */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(44, 62, 80, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 10px 0;
+            display: flex;
+            justify-content: space-around;
+            z-index: 1000;
+            border-top: 1px solid rgba(255,255,255,0.1);
+        }
+        
+        .nav-item {
+            color: #bdc3c7;
+            text-align: center;
+            padding: 8px 5px;
+            border-radius: 10px;
+            transition: all 0.3s;
+            flex: 1;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 50px;
+        }
+        
+        .nav-item.active {
+            color: white;
+            background: rgba(52, 152, 219, 0.3);
+            transform: translateY(-5px);
+        }
+        
+        .nav-item i {
+            font-size: 1.3rem;
+            margin-bottom: 4px;
+            transition: transform 0.3s;
+        }
+        
+        .nav-item.active i {
+            transform: scale(1.1);
+        }
+        
+        .nav-item span {
+            font-size: 0.75rem;
+            display: block;
+        }
+        
+        /* 数据卡片优化 */
+        .data-card {
+            background: white;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 10px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        
+        .data-label {
+            font-size: 0.85rem;
+            color: #6c757d;
+            margin-bottom: 5px;
+            font-weight: 500;
+        }
+        
+        .data-value {
+            font-size: 1.4rem;
+            font-weight: 600;
+            color: #2c3e50;
+        }
+        
+        /* 滚动条优化 */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 10px;
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background: #c1c1c1;
+            border-radius: 10px;
+        }
+        
+        ::-webkit-scrollbar-thumb:hover {
+            background: #a8a8a8;
+        }
+        
+        /* 加载动画 */
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(52, 152, 219, 0.3);
+            border-radius: 50%;
+            border-top-color: #3498db;
+            animation: spin 1s ease-in-out infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        /* 统计卡片 */
+        .stat-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 15px;
+            padding: 20px;
+            text-align: center;
+            margin-bottom: 15px;
+        }
+        
+        .stat-value {
+            font-size: 2rem;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        
+        .stat-label {
+            font-size: 0.9rem;
+            opacity: 0.9;
+        }
+        
+        /* 模态框样式 */
+        .modal-image {
+            max-width: 100%;
+            height: auto;
+            border-radius: 10px;
+        }
+        
+        /* 触摸反馈 */
+        .touch-feedback:active {
+            opacity: 0.7;
+        }
+    </style>
+</head>
+<body>
+    <!-- 顶部导航栏 -->
+    <nav class="navbar navbar-dark sticky-top">
+        <div class="container-fluid">
+            <span class="navbar-brand">
+                <i class="fas fa-car me-2"></i>
+                车载安全监控
+            </span>
+            <div class="d-flex align-items-center">
+                <span id="connection-status" class="status-badge status-offline me-2">离线</span>
+                <span id="update-time" class="text-light" style="font-size: 0.85rem;">--:--:--</span>
+            </div>
+        </div>
+    </nav>
+    
+    <!-- 主内容区 -->
+    <div class="container mt-3" id="main-content">
+        <!-- 仪表盘页面 -->
+        <div id="dashboard-page" class="page">
+            <!-- 风险状态卡片 -->
+            <div class="card touch-feedback">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <span><i class="fas fa-exclamation-triangle me-2"></i>风险状态</span>
+                    <span id="risk-timestamp" class="text-light" style="font-size: 0.8rem;">--:--:--</span>
+                </div>
+                <div class="card-body text-center">
+                    <div id="risk-indicator" class="risk-indicator risk-normal mb-3">
+                        <i class="fas fa-check-circle me-2"></i>正常
+                    </div>
+                    <p id="risk-description" class="text-muted mb-0">系统运行正常</p>
+                </div>
+            </div>
+            
+            <!-- 环境监测卡片 -->
+            <div class="card touch-feedback">
+                <div class="card-header">
+                    <i class="fas fa-thermometer-half me-2"></i>环境监测
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-6">
+                            <div class="data-card text-center">
+                                <div class="data-label">温度</div>
+                                <div class="data-value text-danger" id="temperature-value">--</div>
+                                <div class="value-unit">°C</div>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="data-card text-center">
+                                <div class="data-label">湿度</div>
+                                <div class="data-value text-primary" id="humidity-value">--</div>
+                                <div class="value-unit">%</div>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="data-card text-center">
+                                <div class="data-label">CO₂</div>
+                                <div class="data-value text-success" id="co2-value">--</div>
+                                <div class="value-unit">ppm</div>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="data-card text-center">
+                                <div class="data-label">TVOC</div>
+                                <div class="data-value text-warning" id="tvoc-value">--</div>
+                                <div class="value-unit">ppb</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 系统状态卡片 -->
+            <div class="card touch-feedback">
+                <div class="card-header">
+                    <i class="fas fa-car me-2"></i>系统状态
+                </div>
+                <div class="card-body">
+                    <div class="row g-2">
+                        <div class="col-6">
+                            <div class="data-card">
+                                <div class="data-label">车门状态</div>
+                                <div class="data-value" id="door-status-value">--</div>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="data-card">
+                                <div class="data-label">运动检测</div>
+                                <div class="data-value" id="pir-status-value">--</div>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="data-card">
+                                <div class="data-label">成人检测</div>
+                                <div class="data-value" id="human-status-value">--</div>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="data-card">
+                                <div class="data-label">儿童检测</div>
+                                <div class="data-value" id="child-status-value">--</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 控制中心页面 -->
+        <div id="control-page" class="page" style="display: none;">
+            <div class="card">
+                <div class="card-header">
+                    <i class="fas fa-gamepad me-2"></i>远程控制
+                </div>
+                <div class="card-body">
+                    <div class="row g-2">
+                        <div class="col-6">
+                            <button class="btn btn-primary btn-control w-100 touch-feedback" onclick="sendCommand('lower_window', {percent: 100})">
+                                <i class="fas fa-window-maximize me-2"></i>一键降窗
+                            </button>
+                        </div>
+                        <div class="col-6">
+                            <button class="btn btn-warning btn-control w-100 touch-feedback" onclick="sendCommand('test_alarm', {})">
+                                <i class="fas fa-bell me-2"></i>测试报警
+                            </button>
+                        </div>
+                        <div class="col-6">
+                            <button class="btn btn-info btn-control w-100 touch-feedback" onclick="sendCommand('send_sms', {})">
+                                <i class="fas fa-sms me-2"></i>发送短信
+                            </button>
+                        </div>
+                        <div class="col-6">
+                            <button class="btn btn-danger btn-control w-100 touch-feedback" onclick="resetSystem()">
+                                <i class="fas fa-redo me-2"></i>系统复位
+                            </button>
+                        </div>
+                        <div class="col-6">
+                            <button class="btn btn-secondary btn-control w-100 touch-feedback" onclick="sendCommand('close_window', {})">
+                                <i class="fas fa-window-minimize me-2"></i>一键关窗
+                            </button>
+                        </div>
+                        <div class="col-6">
+                            <button class="btn btn-success btn-control w-100 touch-feedback" onclick="refreshData()">
+                                <i class="fas fa-sync-alt me-2"></i>刷新数据
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-4">
+                        <h6><i class="fas fa-history me-2"></i>控制历史</h6>
+                        <div id="control-history" class="list-group" style="max-height: 200px; overflow-y: auto;">
+                            <!-- 控制历史记录会动态添加到这里 -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 报警管理页面 -->
+        <div id="alerts-page" class="page" style="display: none;">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <span><i class="fas fa-bell me-2"></i>报警记录</span>
+                    <div>
+                        <button class="btn btn-sm btn-outline-light touch-feedback" onclick="clearAlerts()" title="清空报警">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-3">
+                        <div class="col-6">
+                            <div class="stat-card">
+                                <div class="stat-value" id="total-alerts">0</div>
+                                <div class="stat-label">总报警数</div>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="stat-card">
+                                <div class="stat-value" id="today-alerts">0</div>
+                                <div class="stat-label">今日报警</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <h6 class="mb-3"><i class="fas fa-list me-2"></i>最近报警记录</h6>
+                    <div id="alerts-list" style="max-height: 300px; overflow-y: auto;">
+                        <!-- 报警记录会动态添加到这里 -->
+                        <div class="text-center text-muted py-5" id="no-alerts">
+                            <i class="fas fa-check-circle fa-3x mb-3" style="color: #2ecc71;"></i>
+                            <p>暂无报警记录</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 抓拍记录页面 -->
+        <div id="capture-page" class="page" style="display: none;">
+            <div class="card">
+                <div class="card-header">
+                    <i class="fas fa-camera me-2"></i>人员抓拍记录
+                </div>
+                <div class="card-body">
+                    <h6 class="mb-3"><i class="fas fa-image me-2"></i>最新抓拍</h6>
+                    <div id="latest-capture" class="text-center">
+                        <div class="text-muted py-5">
+                            <i class="fas fa-camera fa-3x mb-3" style="color: #95a5a6;"></i>
+                            <p>等待抓拍图片...</p>
+                        </div>
+                    </div>
+                    
+                    <h6 class="mt-4 mb-3"><i class="fas fa-history me-2"></i>历史记录</h6>
+                    <div id="capture-history" style="max-height: 300px; overflow-y: auto;">
+                        <!-- 抓拍历史记录会动态添加到这里 -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 底部导航栏 -->
+    <div class="bottom-nav">
+        <div class="nav-item active" onclick="showPage('dashboard')">
+            <i class="fas fa-tachometer-alt"></i>
+            <span>仪表盘</span>
+        </div>
+        <div class="nav-item" onclick="showPage('control')">
+            <i class="fas fa-gamepad"></i>
+            <span>控制</span>
+        </div>
+        <div class="nav-item" onclick="showPage('alerts')">
+            <i class="fas fa-bell"></i>
+            <span>报警</span>
+        </div>
+        <div class="nav-item" onclick="showPage('capture')">
+            <i class="fas fa-camera"></i>
+            <span>抓拍</span>
+        </div>
+    </div>
+    
+    <!-- 图片查看模态框 -->
+    <div class="modal fade" id="imageModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">查看图片</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body text-center">
+                    <img id="modalImage" src="" class="modal-image w-100" alt="查看图片">
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">关闭</button>
+                    <a id="downloadImage" href="#" class="btn btn-primary" download>
+                        <i class="fas fa-download me-2"></i>下载图片
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- SocketIO -->
+    <script src="https://cdn.socket.io/4.5.0/socket.io.min.js"></script>
+    <!-- Viewer.js for better image viewing -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/viewerjs/1.11.6/viewer.min.js"></script>
+    
+    <script>
+        // 全局变量
+        let socket = null;
+        let currentData = null;
+        let currentRiskLevel = 'normal';
+        let imageViewer = null;
+        
+        // 页面切换函数
+        function showPage(pageName) {
+            // 隐藏所有页面
+            document.querySelectorAll('.page').forEach(page => {
+                page.style.display = 'none';
+            });
+            
+            // 显示目标页面
+            document.getElementById(pageName + '-page').style.display = 'block';
+            
+            // 更新导航栏激活状态
+            document.querySelectorAll('.nav-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            
+            // 根据页面名称找到对应的导航项
+            const pageMap = {
+                'dashboard': 0,
+                'control': 1,
+                'alerts': 2,
+                'capture': 3
+            };
+            
+            if (pageMap[pageName] !== undefined) {
+                document.querySelectorAll('.nav-item')[pageMap[pageName]].classList.add('active');
+            }
+            
+            // 如果是抓拍页面，加载抓拍历史
+            if (pageName === 'capture') {
+                loadCaptureHistory();
+            }
+        }
+        
+        // 初始化SocketIO连接
+        function initSocket() {
+            socket = io();
+            
+            socket.on('connect', function() {
+                console.log('已连接到服务器');
+                updateConnectionStatus(true);
+            });
+            
+            socket.on('disconnect', function() {
+                console.log('与服务器断开连接');
+                updateConnectionStatus(false);
+            });
+            
+            // 传感器数据更新
+            socket.on('sensor_update', function(data) {
+                console.log('收到传感器更新:', data);
+                updateSensorDisplay(data.data);
+                updateConnectionStatus(true);
+            });
+            
+            // 报警更新
+            socket.on('alert_update', function(data) {
+                console.log('收到报警更新:', data);
+                addAlertToList(data.alert);
+                updateAlertStats();
+                updateRiskFromAlert(data.alert);
+            });
+            
+            // 图片更新
+            socket.on('image_update', function(data) {
+                console.log('收到图片更新:', data);
+                updateCaptureDisplay(data.image);
+                loadCaptureHistory();
+            });
+            
+            // 检测更新
+            socket.on('detection_update', function(data) {
+                console.log('收到检测更新:', data);
+                updateDetectionDisplay(data.detection);
+            });
+        }
+        
+        // 更新连接状态
+        function updateConnectionStatus(connected) {
+            const statusElement = document.getElementById('connection-status');
+            if (connected) {
+                statusElement.textContent = '在线';
+                statusElement.className = 'status-badge status-online';
+            } else {
+                statusElement.textContent = '离线';
+                statusElement.className = 'status-badge status-offline';
+            }
+        }
+        
+        // 更新传感器数据显示
+        function updateSensorDisplay(data) {
+            if (!data) return;
+            
+            // 更新时间显示
+            const now = new Date();
+            document.getElementById('update-time').textContent = 
+                now.getHours().toString().padStart(2, '0') + ':' +
+                now.getMinutes().toString().padStart(2, '0') + ':' +
+                now.getSeconds().toString().padStart(2, '0');
+            
+            // 更新温度
+            if (data.temperature !== undefined) {
+                document.getElementById('temperature-value').textContent = data.temperature.toFixed(1);
+            }
+            
+            // 更新湿度
+            if (data.humidity !== undefined) {
+                document.getElementById('humidity-value').textContent = data.humidity.toFixed(1);
+            }
+            
+            // 更新CO2
+            if (data.eco2 !== undefined) {
+                document.getElementById('co2-value').textContent = data.eco2;
+            }
+            
+            // 更新TVOC
+            if (data.tvoc !== undefined) {
+                document.getElementById('tvoc-value').textContent = data.tvoc;
+            }
+            
+            // 更新车门状态
+            if (data.door_closed !== undefined) {
+                const doorText = data.door_closed ? '关闭' : '打开';
+                const doorColor = data.door_closed ? 'text-success' : 'text-danger';
+                document.getElementById('door-status-value').textContent = doorText;
+                document.getElementById('door-status-value').className = 'data-value ' + doorColor;
+            }
+            
+            // 更新PIR状态
+            if (data.pir_state !== undefined) {
+                const pirText = data.pir_state ? '检测到' : '无';
+                const pirColor = data.pir_state ? 'text-warning' : 'text-secondary';
+                document.getElementById('pir-status-value').textContent = pirText;
+                document.getElementById('pir-status-value').className = 'data-value ' + pirColor;
+            }
+            
+            // 更新成人检测
+            if (data.human_detected !== undefined) {
+                const humanText = data.human_detected ? '检测到' : '无';
+                const humanColor = data.human_detected ? 'text-primary' : 'text-secondary';
+                document.getElementById('human-status-value').textContent = humanText;
+                document.getElementById('human-status-value').className = 'data-value ' + humanColor;
+            }
+            
+            // 更新儿童检测
+            if (data.child_detected !== undefined) {
+                const childText = data.child_detected ? '检测到' : '无';
+                const childColor = data.child_detected ? 'text-danger' : 'text-secondary';
+                document.getElementById('child-status-value').textContent = childText;
+                document.getElementById('child-status-value').className = 'data-value ' + childColor;
+            }
+            
+            // 保存当前数据
+            currentData = data;
+        }
+        
+        // 更新风险状态
+        function updateRiskFromAlert(alert) {
+            if (!alert) return;
+            
+            const riskElement = document.getElementById('risk-indicator');
+            const descElement = document.getElementById('risk-description');
+            const timestampElement = document.getElementById('risk-timestamp');
+            
+            let riskLevel = 'normal';
+            let riskText = '正常';
+            let riskClass = 'risk-normal';
+            let description = '系统运行正常';
+            let icon = 'fa-check-circle';
+            
+            // 根据报警等级确定风险状态
+            if (alert.level === 'emergency') {
+                riskLevel = 'emergency';
+                riskText = '紧急';
+                riskClass = 'risk-emergency';
+                description = alert.message || '系统检测到紧急情况！';
+                icon = 'fa-exclamation-circle';
+            } else if (alert.level === 'warning') {
+                riskLevel = 'warning';
+                riskText = '警告';
+                riskClass = 'risk-warning';
+                description = alert.message || '系统检测到警告情况';
+                icon = 'fa-exclamation-triangle';
+            }
+            
+            // 更新显示
+            riskElement.innerHTML = `<i class="fas ${icon} me-2"></i>${riskText}`;
+            riskElement.className = 'risk-indicator ' + riskClass;
+            descElement.textContent = description;
+            
+            // 更新时间戳
+            if (alert.timestamp) {
+                const date = new Date(alert.timestamp * 1000);
+                timestampElement.textContent = 
+                    date.getHours().toString().padStart(2, '0') + ':' +
+                    date.getMinutes().toString().padStart(2, '0') + ':' +
+                    date.getSeconds().toString().padStart(2, '0');
+            }
+            
+            currentRiskLevel = riskLevel;
+        }
+        
+        // 添加报警到列表
+        function addAlertToList(alert) {
+            if (!alert) return;
+            
+            // 隐藏"无报警"提示
+            const noAlertsElement = document.getElementById('no-alerts');
+            if (noAlertsElement) {
+                noAlertsElement.style.display = 'none';
+            }
+            
+            const alertsList = document.getElementById('alerts-list');
+            
+            // 创建报警项
+            const alertItem = document.createElement('div');
+            
+            // 确定报警样式
+            let alertClass = 'alert-info';
+            let iconClass = 'fa-info-circle';
+            if (alert.level === 'emergency') {
+                alertClass = 'alert-emergency';
+                iconClass = 'fa-exclamation-circle';
+            } else if (alert.level === 'warning') {
+                alertClass = 'alert-warning';
+                iconClass = 'fa-exclamation-triangle';
+            }
+            
+            // 格式化时间
+            let timeStr = '--:--:--';
+            if (alert.timestamp) {
+                const date = new Date(alert.timestamp * 1000);
+                timeStr = 
+                    date.getHours().toString().padStart(2, '0') + ':' +
+                    date.getMinutes().toString().padStart(2, '0') + ':' +
+                    date.getSeconds().toString().padStart(2, '0');
+            }
+            
+            alertItem.className = 'alert-item ' + alertClass;
+            alertItem.innerHTML = `
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <i class="fas ${iconClass} me-2"></i>
+                        <strong>${alert.level || 'INFO'}</strong>
+                    </div>
+                    <small class="text-muted">${timeStr}</small>
+                </div>
+                <div class="mt-1 small">${alert.message || ''}</div>
+            `;
+            
+            // 添加到列表顶部
+            alertsList.insertBefore(alertItem, alertsList.firstChild);
+            
+            // 限制列表长度
+            const maxAlerts = 20;
+            const alerts = alertsList.querySelectorAll('.alert-item');
+            if (alerts.length > maxAlerts) {
+                alerts[alerts.length - 1].remove();
+            }
+            
+            // 播放提示音（如果是紧急或警告报警）
+            if (alert.level === 'emergency' || alert.level === 'warning') {
+                playAlertSound();
+            }
+        }
+        
+        // 播放报警提示音
+        function playAlertSound() {
+            try {
+                // 创建简单的提示音
+                const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                const oscillator = audioContext.createOscillator();
+                const gainNode = audioContext.createGain();
+                
+                oscillator.connect(gainNode);
+                gainNode.connect(audioContext.destination);
+                
+                oscillator.frequency.value = 800;
+                oscillator.type = 'sine';
+                
+                gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
+                
+                oscillator.start(audioContext.currentTime);
+                oscillator.stop(audioContext.currentTime + 0.5);
+            } catch (e) {
+                console.log('无法播放报警音:', e);
+            }
+        }
+        
+        // 更新报警统计
+        function updateAlertStats() {
+            fetch('/api/alerts/stats')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        document.getElementById('total-alerts').textContent = data.total || 0;
+                        document.getElementById('today-alerts').textContent = data.today || 0;
+                    }
+                })
+                .catch(error => {
+                    console.error('获取报警统计失败:', error);
+                });
+        }
+        
+        // 清空报警记录
+        function clearAlerts() {
+            if (confirm('确定要清空所有报警记录吗？')) {
+                fetch('/api/alerts/clear', { method: 'POST' })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            document.getElementById('alerts-list').innerHTML = `
+                                <div class="text-center text-muted py-5" id="no-alerts">
+                                    <i class="fas fa-check-circle fa-3x mb-3" style="color: #2ecc71;"></i>
+                                    <p>暂无报警记录</p>
+                                </div>
+                            `;
+                            document.getElementById('total-alerts').textContent = '0';
+                            document.getElementById('today-alerts').textContent = '0';
+                            
+                            // 风险状态恢复为正常
+                            updateRiskFromAlert({ level: 'normal', message: '系统运行正常' });
+                        }
+                    })
+                    .catch(error => {
+                        console.error('清空报警失败:', error);
+                        alert('清空报警失败: ' + error);
+                    });
+            }
+        }
+        
+        // 发送控制命令
+        function sendCommand(command, params) {
+            if (!socket || !socket.connected) {
+                alert('未连接到服务器，无法发送命令');
+                return;
+            }
+            
+            if (confirm(`确定要执行 ${command} 命令吗？`)) {
+                fetch('/api/control', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        command: command,
+                        params: params || {}
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // 添加到控制历史
+                        addControlHistory(command, params, '成功');
+                        alert('命令发送成功！');
+                    } else {
+                        addControlHistory(command, params, '失败: ' + data.message);
+                        alert('命令发送失败: ' + data.message);
+                    }
+                })
+                .catch(error => {
+                    console.error('发送命令失败:', error);
+                    addControlHistory(command, params, '失败: ' + error);
+                    alert('发送命令失败: ' + error);
+                });
+            }
+        }
+        
+        // 系统复位
+        function resetSystem() {
+            if (confirm('确定要复位系统吗？这将停止所有报警并重置系统状态。')) {
+                sendCommand('reset_system', {});
+                
+                // 本地立即更新风险状态为正常
+                updateRiskFromAlert({ level: 'normal', message: '系统已复位，所有报警状态已停止' });
+            }
+        }
+        
+        // 添加控制历史
+        function addControlHistory(command, params, result) {
+            const historyList = document.getElementById('control-history');
+            
+            const historyItem = document.createElement('div');
+            historyItem.className = 'list-group-item list-group-item-action';
+            
+            const now = new Date();
+            const timeStr = now.getHours().toString().padStart(2, '0') + ':' +
+                           now.getMinutes().toString().padStart(2, '0') + ':' +
+                           now.getSeconds().toString().padStart(2, '0');
+            
+            let paramsStr = '';
+            if (params && Object.keys(params).length > 0) {
+                paramsStr = ' (' + JSON.stringify(params) + ')';
+            }
+            
+            historyItem.innerHTML = `
+                <div class="d-flex w-100 justify-content-between">
+                    <small>${timeStr}</small>
+                    <small class="${result.includes('成功') ? 'text-success' : 'text-danger'}">${result}</small>
+                </div>
+                <p class="mb-1 small">${command}${paramsStr}</p>
+            `;
+            
+            // 添加到列表顶部
+            historyList.insertBefore(historyItem, historyList.firstChild);
+            
+            // 限制列表长度
+            const maxHistory = 10;
+            const historyItems = historyList.querySelectorAll('.list-group-item');
+            if (historyItems.length > maxHistory) {
+                historyItems[historyItems.length - 1].remove();
+            }
+        }
+        
+        // 更新抓拍显示 - 修复图片显示问题
+        function updateCaptureDisplay(image) {
+            if (!image) return;
+            
+            const captureContainer = document.getElementById('latest-capture');
+            
+            // 格式化时间
+            let timeStr = image.capture_time || '--:--:--';
+            if (image.timestamp) {
+                const date = new Date(image.timestamp * 1000);
+                timeStr = 
+                    date.getHours().toString().padStart(2, '0') + ':' +
+                    date.getMinutes().toString().padStart(2, '0') + ':' +
+                    date.getSeconds().toString().padStart(2, '0');
+            }
+            
+            // 使用新的图片容器布局
+            captureContainer.innerHTML = `
+                <div class="image-container" onclick="viewImageModal('${image.filename}')">
+                    <img src="/static/captured_images/${image.filename}" 
+                         class="captured-image" 
+                         alt="抓拍图片"
+                         onerror="this.onerror=null; this.src='data:image/svg+xml;utf8,<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"300\" height=\"225\"><rect width=\"100%\" height=\"100%\" fill=\"%23f8f9fa\"/><text x=\"50%\" y=\"50%\" font-family=\"Arial\" font-size=\"16\" fill=\"%236c757d\" text-anchor=\"middle\" dy=\".3em\">图片加载失败</text></svg>'">
+                    <div class="image-info">
+                        <div class="row">
+                            <div class="col-6">
+                                <small><i class="far fa-clock me-1"></i>${timeStr}</small>
+                            </div>
+                            <div class="col-6 text-end">
+                                <small><i class="fas fa-child me-1"></i>${image.child_count || 0}</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="row mt-3">
+                    <div class="col-6">
+                        <div class="data-card text-center">
+                            <div class="data-label">检测类型</div>
+                            <div class="data-value">${image.detection_type || '未知'}</div>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="data-card text-center">
+                            <div class="data-label">置信度</div>
+                            <div class="data-value">${(image.confidence || 0).toFixed(1)}%</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="d-grid gap-2 mt-3">
+                    <button class="btn btn-primary" onclick="viewImageModal('${image.filename}')">
+                        <i class="fas fa-expand me-2"></i>查看大图
+                    </button>
+                    <button class="btn btn-outline-primary" onclick="downloadImage('${image.filename}')">
+                        <i class="fas fa-download me-2"></i>下载图片
+                    </button>
+                </div>
+            `;
+            
+            // 初始化图片查看器
+            initImageViewer();
+        }
+        
+        // 初始化图片查看器
+        function initImageViewer() {
+            if (imageViewer) {
+                imageViewer.destroy();
+            }
+            
+            const images = document.querySelectorAll('.captured-image');
+            if (images.length > 0) {
+                imageViewer = new Viewer(images[0], {
+                    inline: false,
+                    toolbar: {
+                        zoomIn: 1,
+                        zoomOut: 1,
+                        oneToOne: 1,
+                        reset: 1,
+                        prev: 0,
+                        play: 0,
+                        next: 0,
+                        rotateLeft: 1,
+                        rotateRight: 1,
+                        flipHorizontal: 1,
+                        flipVertical: 1,
+                    },
+                    viewed() {
+                        imageViewer.zoomTo(1);
+                    }
+                });
+            }
+        }
+        
+        // 查看图片模态框
+        function viewImageModal(filename) {
+            const modalImage = document.getElementById('modalImage');
+            const downloadLink = document.getElementById('downloadImage');
+            
+            modalImage.src = `/static/captured_images/${filename}`;
+            downloadLink.href = `/static/captured_images/${filename}`;
+            downloadLink.download = filename;
+            
+            const modal = new bootstrap.Modal(document.getElementById('imageModal'));
+            modal.show();
+        }
+        
+        // 下载图片
+        function downloadImage(filename) {
+            const link = document.createElement('a');
+            link.href = `/static/captured_images/${filename}`;
+            link.download = filename;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+        
+        // 加载抓拍历史
+        function loadCaptureHistory() {
+            fetch('/api/captures')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // 更新历史记录
+                        const historyContainer = document.getElementById('capture-history');
+                        if (data.history && data.history.length > 0) {
+                            let historyHTML = '';
+                            
+                            data.history.forEach((capture, index) => {
+                                if (index >= 10) return; // 只显示最近10条
+                                
+                                const timeStr = capture.capture_time || '--:--:--';
+                                const date = new Date(capture.timestamp * 1000);
+                                const displayTime = date.toLocaleTimeString();
+                                
+                                historyHTML += `
+                                    <div class="list-group-item mb-2" style="border-radius: 10px;">
+                                        <div class="d-flex align-items-center">
+                                            <div class="flex-shrink-0 me-3">
+                                                <div style="width: 60px; height: 60px; border-radius: 8px; overflow: hidden; background-color: #f8f9fa;">
+                                                    <img src="/static/captured_images/${capture.local_path}" 
+                                                         style="width: 100%; height: 100%; object-fit: cover;"
+                                                         onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"60\" height=\"60\"><rect width=\"100%\" height=\"100%\" fill=\"%23f8f9fa\"/><text x=\"50%\" y=\"50%\" font-family=\"Arial\" font-size=\"12\" fill=\"%236c757d\" text-anchor=\"middle\" dy=\".3em\">无图</text></svg>'">
+                                                </div>
+                                            </div>
+                                            <div class="flex-grow-1">
+                                                <div class="d-flex justify-content-between align-items-center">
+                                                    <strong>抓拍记录</strong>
+                                                    <small class="text-muted">${displayTime}</small>
+                                                </div>
+                                                <div class="mt-1">
+                                                    <span class="badge bg-primary me-2">
+                                                        <i class="fas fa-child me-1"></i>${capture.child_count || 0}
+                                                    </span>
+                                                    <span class="badge bg-secondary me-2">
+                                                        <i class="fas fa-user me-1"></i>${capture.adult_count || 0}
+                                                    </span>
+                                                    <span class="badge bg-info">
+                                                        <i class="fas fa-chart-line me-1"></i>${(capture.confidence || 0).toFixed(0)}%
+                                                    </span>
+                                                </div>
+                                            </div>
+                                            <div class="flex-shrink-0 ms-3">
+                                                <button class="btn btn-sm btn-outline-primary" onclick="viewImageModal('${capture.local_path}')">
+                                                    <i class="fas fa-eye"></i>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                `;
+                            });
+                            
+                            historyContainer.innerHTML = historyHTML;
+                        } else {
+                            historyContainer.innerHTML = `
+                                <div class="text-center text-muted py-4">
+                                    <i class="fas fa-camera fa-2x mb-3" style="color: #95a5a6;"></i>
+                                    <p>暂无抓拍记录</p>
+                                </div>
+                            `;
+                        }
+                    }
+                })
+                .catch(error => {
+                    console.error('加载抓拍历史失败:', error);
+                });
+        }
+        
+        // 更新检测显示
+        function updateDetectionDisplay(detection) {
+            // 这里可以添加检测数据的显示逻辑
+            console.log('检测数据更新:', detection);
+        }
+        
+        // 刷新数据
+        function refreshData() {
+            fetch('/api/data/latest')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success && data.data) {
+                        updateSensorDisplay(data.data);
+                        showToast('数据刷新成功！', 'success');
+                    } else {
+                        showToast('刷新数据失败', 'error');
+                    }
+                })
+                .catch(error => {
+                    console.error('刷新数据失败:', error);
+                    showToast('刷新数据失败: ' + error, 'error');
+                });
+        }
+        
+        // 显示Toast消息
+        function showToast(message, type = 'info') {
+            const toast = document.createElement('div');
+            toast.className = `toast align-items-center text-white bg-${type === 'success' ? 'success' : type === 'error' ? 'danger' : 'info'} border-0`;
+            toast.setAttribute('role', 'alert');
+            toast.setAttribute('aria-live', 'assertive');
+            toast.setAttribute('aria-atomic', 'true');
+            toast.innerHTML = `
+                <div class="d-flex">
+                    <div class="toast-body">
+                        ${message}
+                    </div>
+                    <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+                </div>
+            `;
+            
+            document.body.appendChild(toast);
+            const bsToast = new bootstrap.Toast(toast);
+            bsToast.show();
+            
+            toast.addEventListener('hidden.bs.toast', () => {
+                document.body.removeChild(toast);
+            });
+        }
+        
+        // 页面加载完成后初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            // 初始化Socket连接
+            initSocket();
+            
+            // 显示仪表盘页面
+            showPage('dashboard');
+            
+            // 加载初始数据
+            refreshData();
+            updateAlertStats();
+            loadCaptureHistory();
+            
+            // 自动刷新数据（每30秒）
+            setInterval(refreshData, 30000);
+            
+            // 自动刷新报警统计（每60秒）
+            setInterval(updateAlertStats, 60000);
+            
+            // 如果当前在抓拍页面，每30秒刷新一次抓拍历史
+            setInterval(() => {
+                if (document.getElementById('capture-page').style.display !== 'none') {
+                    loadCaptureHistory();
+                }
+            }, 30000);
+            
+            // 添加触摸反馈
+            document.querySelectorAll('.touch-feedback').forEach(element => {
+                element.addEventListener('touchstart', function() {
+                    this.style.opacity = '0.7';
+                });
+                element.addEventListener('touchend', function() {
+                    this.style.opacity = '1';
+                });
+            });
+        });
+    </script>
+</body>
+</html>

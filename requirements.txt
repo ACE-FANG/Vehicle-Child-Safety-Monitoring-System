@@ -1,0 +1,16 @@
+paho-mqtt
+pyserial
+opencv-python
+torch
+ultralytics
+pandas
+numpy
+matplotlib
+seaborn
+pyqt5
+pyqtgraph
+requests
+pillow
+flask
+flask-socketio
+flask-cors

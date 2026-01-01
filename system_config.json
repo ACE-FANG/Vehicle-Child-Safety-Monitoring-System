@@ -1,0 +1,16 @@
+{
+    "MQTT_BROKER": "broker.emqx.io",
+    "MQTT_PORT": 1883,
+    "MQTT_USER": "",
+    "MQTT_PASSWORD": "",
+    "AUTO_CAPTURE_ENABLED": true,
+    "THRESHOLDS": {
+        "temperature_high": 35.0,
+        "temperature_extreme": 40.0,
+        "humidity_high": 70.0,
+        "co2_high": 1000,
+        "co2_extreme": 1500,
+        "tvoc_high": 500,
+        "tvoc_extreme": 1000
+    }
+}
